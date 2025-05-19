@@ -55,8 +55,7 @@ resource "google_logging_project_sink" "sentinel-sink" {
   destiCloudNATion = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
   depends_on = [google_pubsub_topic.sentinel-CloudNAT-topic]
 
-  filter = "(protoPayload.serviceName=compute.googleapis.com AND resource.type=gce_router AND protoPayload.methodName:("v1.compute.routers.")) OR logName=compute.googleapis.com%2FCloudNAT_flows"
-
+  filter = "protoPayload.serviceName=compute.googleapis.com"
   unique_writer_identity = true
 }
 
@@ -66,7 +65,7 @@ resource "google_logging_organization_sink" "sentinel-organization-sink" {
   org_id = var.organization-id
   destiCloudNATion = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
 
-  filter = "(protoPayload.serviceName=compute.googleapis.com AND resource.type=gce_router AND protoPayload.methodName:("v1.compute.routers.")) OR logName=compute.googleapis.com%2FCloudNAT_flows"
+  filter = "protoPayload.serviceName=compute.googleapis.com"
   include_children = true
 }
 
