@@ -52,7 +52,7 @@ resource "google_logging_project_sink" "sentinel-sink" {
   project    = data.google_project.project.project_id
   count      = var.organization-id == "" ? 1 : 0
   name       = "CloudNAT-logs-sentinel-sink"
-  destiCloudNATion = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
+  destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
   depends_on = [google_pubsub_topic.sentinel-CloudNAT-topic]
 
   filter = "protoPayload.serviceName=compute.googleapis.com"
@@ -63,7 +63,7 @@ resource "google_logging_organization_sink" "sentinel-organization-sink" {
   count = var.organization-id == "" ? 0 : 1
   name   = "CloudNAT-logs-organization-sentinel-sink"
   org_id = var.organization-id
-  destiCloudNATion = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
+  destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
 
   filter = "protoPayload.serviceName=compute.googleapis.com"
   include_children = true
