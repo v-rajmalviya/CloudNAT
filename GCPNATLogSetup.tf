@@ -53,7 +53,7 @@ resource "google_logging_project_sink" "sentinel-sink" {
   count      = var.organization-id == "" ? 1 : 0
   name       = "nat-logs-sentinel-sink"
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
-  depends_on = [google_pubsub_topic.sentinel-CloudNAT-topic]
+  depends_on = [google_pubsub_topic.sentinel-nat-topic]
 
   filter = "logName:(compute.googleapis.com/nat_flows) OR (resource.type=gce_router protoPayload.serviceName=compute.googleapis.com protoPayload.methodName:v1.compute.routers.*)"
   unique_writer_identity = true
