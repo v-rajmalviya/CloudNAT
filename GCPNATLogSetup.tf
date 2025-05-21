@@ -55,7 +55,7 @@ resource "google_logging_project_sink" "sentinel-sink" {
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
   depends_on = [google_pubsub_topic.sentinel-nat-topic]
 
-  filter = "logName:(compute.googleapis.com/nat_flows) OR (resource.type=gce_router protoPayload.serviceName=compute.googleapis.com protoPayload.methodName:v1.compute.routers.*)"
+  filter = "logName: compute.googleapis.com%2Fnat_flows OR (resource.type=gce_router AND protoPayload.serviceName=compute.googleapis.com AND protoPayload.methodName:("v1.compute.routers.")"
   unique_writer_identity = true
 }
 
@@ -65,7 +65,7 @@ resource "google_logging_organization_sink" "sentinel-organization-sink" {
   org_id = var.organization-id
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
 
-  filter = "logName:(compute.googleapis.com/nat_flows) OR (resource.type=gce_router protoPayload.serviceName=compute.googleapis.com protoPayload.methodName:v1.compute.routers.*)" 
+  filter = "logName: compute.googleapis.com%2Fnat_flows OR (resource.type=gce_router AND protoPayload.serviceName=compute.googleapis.com AND protoPayload.methodName:("v1.compute.routers.")"
   include_children = true
 }
 
