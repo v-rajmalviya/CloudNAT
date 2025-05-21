@@ -16,7 +16,7 @@ variable "project-id" {
 
 variable "topic-name" {
   type        = string
-  default     = "sentinel-CloudNAT-topic"
+  default     = "sentinel-nat-topic"
   description = "Name of existing topic"
 }
 
@@ -43,7 +43,7 @@ resource "google_pubsub_topic" "sentinel-CloudNAT-topic" {
 
 resource "google_pubsub_subscription" "sentinel-subscription" {
   project = data.google_project.project.project_id
-  name    = "sentinel-subscription-CloudNATlogs"
+  name    = "sentinel-subscription-natlogs"
   topic   = var.topic-name
   depends_on = [google_pubsub_topic.sentinel-CloudNAT-topic]
 }
@@ -55,7 +55,8 @@ resource "google_logging_project_sink" "sentinel-sink" {
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
   depends_on = [google_pubsub_topic.sentinel-CloudNAT-topic]
 
-  filter = "protoPayload.serviceName=compute.googleapis.com"
+  filter = "(logName:compute.googleapis.com%2Fnat_flows OR (resource.type=gce_router AND protoPayload.serviceName=compute.googleapis.com AND protoPayload.methodName:(v1.compute.routers.)))" 
+
   unique_writer_identity = true
 }
 
@@ -65,7 +66,7 @@ resource "google_logging_organization_sink" "sentinel-organization-sink" {
   org_id = var.organization-id
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
 
-  filter = "protoPayload.serviceName=compute.googleapis.com"
+  filter = "(logName:compute.googleapis.com%2Fnat_flows OR (resource.type=gce_router AND protoPayload.serviceName=compute.googleapis.com AND protoPayload.methodName:(v1.compute.routers.)))" 
   include_children = true
 }
 
