@@ -35,8 +35,8 @@ resource "google_project_service" "enable-logging-api" {
   project = data.google_project.project.project_id
 }
 
-resource "google_pubsub_topic" "sentinel-CloudNAT-topic" {
-  count   = "${var.topic-name != "sentinel-CloudNAT-topic" ? 0 : 1}"
+resource "google_pubsub_topic" "sentinel-nat-topic" {
+  count   = "${var.topic-name != "sentinel-nat-topic" ? 0 : 1}"
   name    = var.topic-name
   project = data.google_project.project.project_id
 }
@@ -45,13 +45,13 @@ resource "google_pubsub_subscription" "sentinel-subscription" {
   project = data.google_project.project.project_id
   name    = "sentinel-subscription-natlogs"
   topic   = var.topic-name
-  depends_on = [google_pubsub_topic.sentinel-CloudNAT-topic]
+  depends_on = [google_pubsub_topic.sentinel-nat-topic]
 }
 
 resource "google_logging_project_sink" "sentinel-sink" {
   project    = data.google_project.project.project_id
   count      = var.organization-id == "" ? 1 : 0
-  name       = "CloudNAT-logs-sentinel-sink"
+  name       = "nat-logs-sentinel-sink"
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
   depends_on = [google_pubsub_topic.sentinel-CloudNAT-topic]
 
@@ -61,7 +61,7 @@ resource "google_logging_project_sink" "sentinel-sink" {
 
 resource "google_logging_organization_sink" "sentinel-organization-sink" {
   count = var.organization-id == "" ? 0 : 1
-  name   = "CloudNAT-logs-organization-sentinel-sink"
+  name   = "nat-logs-organization-sentinel-sink"
   org_id = var.organization-id
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
 
