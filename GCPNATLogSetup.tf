@@ -16,7 +16,7 @@ variable "project-id" {
 
 variable "topic-name" {
   type        = string
-  default     = "sentinel-nat-topic"
+  default     = "sentinel-natlogs-topic"
   description = "Name of existing topic"
 }
 
@@ -35,26 +35,26 @@ resource "google_project_service" "enable-logging-api" {
   project = data.google_project.project.project_id
 }
 
-resource "google_pubsub_topic" "sentinel-nat-topic" {
-  count   = "${var.topic-name != "sentinel-nat-topic" ? 0 : 1}"
+resource "google_pubsub_topic" "sentinel-natlogs-topic" {
+  count   = "${var.topic-name != "sentinel-natlogs-topic" ? 0 : 1}"
   name    = var.topic-name
   project = data.google_project.project.project_id
 }
 
 resource "google_pubsub_subscription" "sentinel-subscription" {
   project = data.google_project.project.project_id
-  name    = "sentinel-subscription-natlogs"
+  name    = "sentinel-subscription-gcpnatlogs"
   topic   = var.topic-name
-  depends_on = [google_pubsub_topic.sentinel-nat-topic]
+  depends_on = [google_pubsub_topic.sentinel-natlogs-topic]
 }
 
 # NAT Logs Sink
 resource "google_logging_project_sink" "sentinel-sink-nat" {
   project    = data.google_project.project.project_id
   count      = var.organization-id == "" ? 1 : 0
-  name       = "nat-logs-sentinel-sink"
+  name       = "natlogs-sentinel-sink"
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
-  depends_on = [google_pubsub_topic.sentinel-nat-topic]
+  depends_on = [google_pubsub_topic.sentinel-natlogs-topic]
 
   filter = <<EOT
   logName="projects/${data.google_project.project.project_id}/logs/compute.googleapis.com%2Fnat_flows" OR
@@ -70,7 +70,7 @@ resource "google_logging_project_sink" "sentinel-sink-audit" {
   count      = var.organization-id == "" ? 1 : 0
   name       = "audit-logs-sentinel-sink"
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
-  depends_on = [google_pubsub_topic.sentinel-nat-topic]
+  depends_on = [google_pubsub_topic.sentinel-natlogs-topic]
 
   filter = <<EOT
   logName="projects/${data.google_project.project.project_id}/logs/cloudaudit.googleapis.com%2Factivity"
