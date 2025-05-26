@@ -48,6 +48,21 @@ resource "google_pubsub_subscription" "sentinel-subscription" {
   depends_on = [google_pubsub_topic.sentinel-natlogs-topic]
 }
 
+resource "google_pubsub_subscription" "sentinel-subscription-nat" {
+  project = data.google_project.project.project_id
+  name    = "sentinel-subscription-gcpnatlogs"
+  topic   = var.topic-name
+  depends_on = [google_pubsub_topic.sentinel-natlogs-topic]
+}
+
+resource "google_pubsub_subscription" "sentinel-subscription-audit" {
+  project = data.google_project.project.project_id
+  name    = "sentinel-subscription-gcpauditlogs"
+  topic   = var.topic-name
+  depends_on = [google_pubsub_topic.sentinel-natlogs-topic]
+}
+
+
 # NAT Logs Sink
 resource "google_logging_project_sink" "sentinel-sink-nat" {
   project    = data.google_project.project.project_id
