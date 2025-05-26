@@ -48,7 +48,8 @@ resource "google_pubsub_subscription" "sentinel-subscription" {
   depends_on = [google_pubsub_topic.sentinel-nat-topic]
 }
 
-resource "google_logging_project_sink" "sentinel-sink" {
+# NAT Logs Sink
+resource "google_logging_project_sink" "sentinel-sink-nat" {
   project    = data.google_project.project.project_id
   count      = var.organization-id == "" ? 1 : 0
   name       = "nat-logs-sentinel-sink"
@@ -59,10 +60,26 @@ resource "google_logging_project_sink" "sentinel-sink" {
   logName="projects/${data.google_project.project.project_id}/logs/compute.googleapis.com%2Fnat_flows" OR
   (resource.type="gce_router" AND protoPayload.serviceName="compute.googleapis.com" AND protoPayload.methodName:"v1.compute.routers.")
   EOT
+
   unique_writer_identity = true
 }
 
-resource "google_logging_organization_sink" "sentinel-organization-sink" {
+# Audit Logs Sink
+resource "google_logging_project_sink" "sentinel-sink-audit" {
+  project    = data.google_project.project.project_id
+  count      = var.organization-id == "" ? 1 : 0
+  name       = "audit-logs-sentinel-sink"
+  destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
+  depends_on = [google_pubsub_topic.sentinel-nat-topic]
+
+  filter = <<EOT
+  logName="projects/${data.google_project.project.project_id}/logs/cloudaudit.googleapis.com%2Factivity"
+  EOT
+
+  unique_writer_identity = true
+}
+
+resource "google_logging_organization_sink" "sentinel-org-sink-nat" {
   count = var.organization-id == "" ? 0 : 1
   name   = "nat-logs-organization-sentinel-sink"
   org_id = var.organization-id
@@ -72,27 +89,62 @@ resource "google_logging_organization_sink" "sentinel-organization-sink" {
   logName="projects/${data.google_project.project.project_id}/logs/compute.googleapis.com%2Fnat_flows" OR
   (resource.type="gce_router" AND protoPayload.serviceName="compute.googleapis.com" AND protoPayload.methodName:"v1.compute.routers.")
   EOT
-  
+
   include_children = true
 }
 
-resource "google_project_iam_binding" "log-writer" {
+resource "google_logging_organization_sink" "sentinel-org-sink-audit" {
+  count = var.organization-id == "" ? 0 : 1
+  name   = "audit-logs-organization-sentinel-sink"
+  org_id = var.organization-id
+  destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
+
+  filter = <<EOT
+  logName="projects/${data.google_project.project.project_id}/logs/cloudaudit.googleapis.com%2Factivity"
+  EOT
+
+  include_children = true
+}
+
+# IAM Bindings for NAT sink
+resource "google_project_iam_binding" "log-writer-nat" {
   count   = var.organization-id == "" ? 1 : 0
   project = data.google_project.project.project_id
   role    = "roles/pubsub.publisher"
 
   members = [
-    google_logging_project_sink.sentinel-sink[0].writer_identity
+    google_logging_project_sink.sentinel-sink-nat[0].writer_identity
   ]
 }
 
-resource "google_project_iam_binding" "log-writer-organization" {
+resource "google_project_iam_binding" "log-writer-org-nat" {
   count   = var.organization-id == "" ? 0 : 1
   project = data.google_project.project.project_id
   role    = "roles/pubsub.publisher"
 
   members = [
-    google_logging_organization_sink.sentinel-organization-sink[0].writer_identity
+    google_logging_organization_sink.sentinel-org-sink-nat[0].writer_identity
+  ]
+}
+
+# IAM Bindings for Audit sink
+resource "google_project_iam_binding" "log-writer-audit" {
+  count   = var.organization-id == "" ? 1 : 0
+  project = data.google_project.project.project_id
+  role    = "roles/pubsub.publisher"
+
+  members = [
+    google_logging_project_sink.sentinel-sink-audit[0].writer_identity
+  ]
+}
+
+resource "google_project_iam_binding" "log-writer-org-audit" {
+  count   = var.organization-id == "" ? 0 : 1
+  project = data.google_project.project.project_id
+  role    = "roles/pubsub.publisher"
+
+  members = [
+    google_logging_organization_sink.sentinel-org-sink-audit[0].writer_identity
   ]
 }
 
