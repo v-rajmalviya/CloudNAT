@@ -175,6 +175,9 @@ output "GCP_project_number" {
   value = data.google_project.project.number
 }
 
-output "GCP_subscription_name" {
-  value = google_pubsub_subscription.sentinel-subscription.name
+output "GCP_subscription_names" {
+  value = [
+    google_pubsub_subscription.sentinel-subscription-nat.name,
+    google_pubsub_subscription.sentinel-subscription-audit.name
+  ]
 }
