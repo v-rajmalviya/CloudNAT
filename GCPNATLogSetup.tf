@@ -41,13 +41,6 @@ resource "google_pubsub_topic" "sentinel-natlogs-topic" {
   project = data.google_project.project.project_id
 }
 
-resource "google_pubsub_subscription" "sentinel-subscription" {
-  project = data.google_project.project.project_id
-  name    = "sentinel-subscription-gcpnatlogs"
-  topic   = var.topic-name
-  depends_on = [google_pubsub_topic.sentinel-natlogs-topic]
-}
-
 resource "google_pubsub_subscription" "sentinel-subscription-nat" {
   project = data.google_project.project.project_id
   name    = "sentinel-subscription-gcpnatlogs"
