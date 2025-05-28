@@ -16,7 +16,7 @@ variable "project-id" {
 
 variable "topic-name" {
   type        = string
-  default     = "sentinel_nat_topic_2"
+  default     = "sentinel_nat_topic_3"
   description = "Name of existing topic"
 }
 
@@ -35,32 +35,32 @@ resource "google_project_service" "enable_logging_api" {
   project = data.google_project.project.project_id
 }
 
-resource "google_pubsub_topic" "sentinel_nat_topic_2" {
-  count   = "${var.topic-name != "sentinel_nat_topic_2" ? 0 : 1}"
+resource "google_pubsub_topic" "sentinel_nat_topic_3" {
+  count   = "${var.topic-name != "sentinel_nat_topic_3" ? 0 : 1}"
   name    = var.topic-name
   project = data.google_project.project.project_id
 }
 
-resource "google_pubsub_subscription" "sentinel_subscription_natlogs_2" {
+resource "google_pubsub_subscription" "sentinel_subscription_natlogs_3" {
   project = data.google_project.project.project_id
-  name    = "sentinel_subscription_natlogs_2"
+  name    = "sentinel_subscription_natlogs_3"
   topic   = var.topic-name
-  depends_on = [google_pubsub_topic.sentinel_nat_topic_2]
+  depends_on = [google_pubsub_topic.sentinel_nat_topic_3]
 }
 
-resource "google_pubsub_subscription" "sentinel_subscription_natlogs_audit" {
+resource "google_pubsub_subscription" "sentinel_subscription_natlogs_audit_3" {
   project = data.google_project.project.project_id
-  name    = "sentinel_subscription_natlogs_audit"
+  name    = "sentinel_subscription_natlogs_audit_3"
   topic   = var.topic-name
-  depends_on = [google_pubsub_topic.sentinel_nat_topic_2]
+  depends_on = [google_pubsub_topic.sentinel_nat_topic_3]
 }
 
-resource "google_logging_project_sink" "sentinel_sink_2" {
+resource "google_logging_project_sink" "sentinel_sink_3" {
   project    = data.google_project.project.project_id
   count      = var.organization-id == "" ? 1 : 0
-  name       = "nat-logs-sentinel-sink"
+  name       = "nat-logs-sentinel-sink_3"
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
-  depends_on = [google_pubsub_topic.sentinel_nat_topic_2]
+  depends_on = [google_pubsub_topic.sentinel_nat_topic_3]
 
   filter = <<EOT
   logName="projects/${data.google_project.project.project_id}/logs/compute.googleapis.com%2Fnat_flows" OR
@@ -70,9 +70,9 @@ resource "google_logging_project_sink" "sentinel_sink_2" {
   unique_writer_identity = true
 }
 
-resource "google_logging_organization_sink" "sentinel_organization_sink_2" {
+resource "google_logging_organization_sink" "sentinel_organization_sink_3" {
   count = var.organization-id == "" ? 0 : 1
-  name   = "nat-logs-organization-sentinel-sink"
+  name   = "nat-logs-organization-sentinel-sink_3"
   org_id = var.organization-id
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
 
@@ -84,23 +84,23 @@ resource "google_logging_organization_sink" "sentinel_organization_sink_2" {
   include_children = true
 }
 
-resource "google_project_iam_binding" "log_writer_2" {
+resource "google_project_iam_binding" "log_writer_3" {
   count   = var.organization-id == "" ? 1 : 0
   project = data.google_project.project.project_id
   role    = "roles/pubsub.publisher"
 
   members = [
-    google_logging_project_sink.sentinel_sink_2[0].writer_identity
+    google_logging_project_sink.sentinel_sink_3[0].writer_identity
   ]
 }
 
-resource "google_project_iam_binding" "log_writer_2_organization" {
+resource "google_project_iam_binding" "log_writer_3_organization" {
   count   = var.organization-id == "" ? 0 : 1
   project = data.google_project.project.project_id
   role    = "roles/pubsub.publisher"
 
   members = [
-    google_logging_organization_sink.sentinel_organization_sink_2[0].writer_identity
+    google_logging_organization_sink.sentinel_organization_sink_3[0].writer_identity
   ]
 }
 
@@ -117,7 +117,7 @@ output "GCP_project_number" {
 }
 
 output "GCP_subscription_name" {
-  value = google_pubsub_subscription.sentinel_subscription_natlogs_2.name
+  value = google_pubsub_subscription.sentinel_subscription_natlogs_3.name
 }
 
 
