@@ -16,7 +16,7 @@ variable "project-id" {
 
 variable "topic-name" {
   type        = string
-  default     = "sentinel-nat-topic"
+  default     = "sentinel_nat_topic"
   description = "Name of existing topic"
 }
 
@@ -30,39 +30,47 @@ data "google_project" "project" {
   project_id = var.project-id
 }
 
-resource "google_project_service" "enable-logging-api" {
+resource "google_project_service" "enable_logging_api" {
   service = "logging.googleapis.com"
   project = data.google_project.project.project_id
 }
 
-resource "google_pubsub_topic" "sentinel-nat-topic" {
-  count   = "${var.topic-name != "sentinel-nat-topic" ? 0 : 1}"
+resource "google_pubsub_topic" "sentinel_nat_topic" {
+  count   = "${var.topic-name != "sentinel_nat_topic" ? 0 : 1}"
   name    = var.topic-name
   project = data.google_project.project.project_id
 }
 
-resource "google_pubsub_subscription" "sentinel-subscription" {
+resource "google_pubsub_subscription" "sentinel-subscription_natlogs" {
   project = data.google_project.project.project_id
-  name    = "sentinel-subscription-natlogs"
+  name    = "sentinel-subscription_natlogs"
   topic   = var.topic-name
-  depends_on = [google_pubsub_topic.sentinel-nat-topic]
+  depends_on = [google_pubsub_topic.sentinel_nat_topic]
 }
 
-resource "google_logging_project_sink" "sentinel-sink" {
+resource "google_pubsub_subscription" "sentinel-subscription_natlogs_audit" {
+  project = data.google_project.project.project_id
+  name    = "sentinel-subscription_natlogs_audit"
+  topic   = var.topic-name
+  depends_on = [google_pubsub_topic.sentinel_nat_topic]
+}
+
+resource "google_logging_project_sink" "sentinel_sink" {
   project    = data.google_project.project.project_id
   count      = var.organization-id == "" ? 1 : 0
   name       = "nat-logs-sentinel-sink"
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
-  depends_on = [google_pubsub_topic.sentinel-nat-topic]
+  depends_on = [google_pubsub_topic.sentinel_nat_topic]
 
   filter = <<EOT
   logName="projects/${data.google_project.project.project_id}/logs/compute.googleapis.com%2Fnat_flows" OR
   (resource.type="gce_router" AND protoPayload.serviceName="compute.googleapis.com" AND protoPayload.methodName:"v1.compute.routers.")
   EOT
+
   unique_writer_identity = true
 }
 
-resource "google_logging_organization_sink" "sentinel-organization-sink" {
+resource "google_logging_organization_sink" "sentinel_organization_sink" {
   count = var.organization-id == "" ? 0 : 1
   name   = "nat-logs-organization-sentinel-sink"
   org_id = var.organization-id
@@ -72,27 +80,27 @@ resource "google_logging_organization_sink" "sentinel-organization-sink" {
   logName="projects/${data.google_project.project.project_id}/logs/compute.googleapis.com%2Fnat_flows" OR
   (resource.type="gce_router" AND protoPayload.serviceName="compute.googleapis.com" AND protoPayload.methodName:"v1.compute.routers.")
   EOT
-  
+
   include_children = true
 }
 
-resource "google_project_iam_binding" "log-writer" {
+resource "google_project_iam_binding" "log_writer" {
   count   = var.organization-id == "" ? 1 : 0
   project = data.google_project.project.project_id
   role    = "roles/pubsub.publisher"
 
   members = [
-    google_logging_project_sink.sentinel-sink[0].writer_identity
+    google_logging_project_sink.sentinel_sink[0].writer_identity
   ]
 }
 
-resource "google_project_iam_binding" "log-writer-organization" {
+resource "google_project_iam_binding" "log_writer_organization" {
   count   = var.organization-id == "" ? 0 : 1
   project = data.google_project.project.project_id
   role    = "roles/pubsub.publisher"
 
   members = [
-    google_logging_organization_sink.sentinel-organization-sink[0].writer_identity
+    google_logging_organization_sink.sentinel_organization_sink[0].writer_identity
   ]
 }
 
@@ -109,5 +117,6 @@ output "GCP_project_number" {
 }
 
 output "GCP_subscription_name" {
-  value = google_pubsub_subscription.sentinel-subscription.name
+  value = google_pubsub_subscription.sentinel-subscription_natlogs.name
 }
+
