@@ -69,6 +69,7 @@ resource "google_logging_project_sink" "sentinel_sink" {
  filter = <<EOT
   logName:"compute.googleapis.com%2Fnat_flows" OR (resource.type="gce_router" AND protoPayload.serviceName="compute.googleapis.com" AND protoPayload.methodName:"v1.compute.routers.")
  EOT
+
   unique_writer_identity = true
 }
 
