@@ -118,14 +118,3 @@ output "GCP_subscription_name" {
   value = google_pubsub_subscription.sentinel_subscription_natlogs_4.name
 }
 
-
-
-
-gcloud pubsub subscriptions create sentinel-subscription-natlogs_audit \
-  --topic=sentinel-nat-topic \
-  --project=msccp-test
-  
-  projects/msccp-test/topics/sentinel-nat-topic
-  
-  gcloud pubsub subscriptions delete sentinel-subscription-natlogs_Audit \
-  --project=msccp-test
